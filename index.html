@@ -1,0 +1,419 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#wrap{display:flex;flex-direction:column;align-items:center;padding:.8rem 0;gap:10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+#hud{display:flex;gap:7px;width:640px}
+.hud-card{flex:1;background:var(--color-background-secondary);border-radius:8px;padding:6px 10px;text-align:center}
+.hud-label{font-size:10px;color:var(--color-text-secondary)}
+.hud-val{font-size:16px;font-weight:500;color:var(--color-text-primary)}
+.hud-bar{height:5px;border-radius:3px;background:var(--color-border-tertiary);margin-top:3px;overflow:hidden}
+.hud-fill{height:100%;border-radius:3px;transition:width .2s}
+#timer-card{flex:.8;background:var(--color-background-secondary);border-radius:8px;padding:6px 10px;text-align:center}
+#timer-val{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+#timer-bar-wrap{height:5px;border-radius:3px;background:var(--color-border-tertiary);margin-top:3px;overflow:hidden}
+#timer-bar{height:100%;border-radius:3px;background:#1D9E75;transition:width .1s,background .3s}
+canvas{border:0.5px solid var(--color-border-secondary);border-radius:8px;display:block}
+#msg-row{height:24px;display:flex;align-items:center;gap:10px}
+#msg{font-size:13px;color:var(--color-text-secondary)}
+#popup{font-size:12px;font-weight:500;padding:3px 12px;border-radius:8px;opacity:0;transition:opacity .3s}
+#btns{display:flex;gap:8px}
+#btns button{padding:6px 20px;font-size:13px;cursor:pointer;border-radius:8px}
+.d-pad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px}
+.d-btn{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text-primary);user-select:none}
+.d-btn:active{opacity:.6}
+#legend{display:flex;gap:12px;font-size:11px;color:var(--color-text-secondary);flex-wrap:wrap;justify-content:center}
+.leg{display:flex;align-items:center;gap:4px}
+.leg-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+#select-screen{width:640px;display:flex;flex-direction:column;align-items:center;gap:16px;padding:4px 0}
+#mascot-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:100%}
+.mascot-card{border:1.5px solid var(--color-border-secondary);border-radius:12px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--color-background-primary);transition:border-color .15s}
+.mascot-card:hover{border-color:#378ADD}
+.mascot-card.selected{border-color:#378ADD;background:var(--color-background-info)}
+.mascot-name{font-size:11px;font-weight:500;color:var(--color-text-primary);text-align:center}
+.mascot-desc{font-size:10px;color:var(--color-text-secondary);text-align:center;line-height:1.4;white-space:pre-line}
+#play-btn{padding:9px 36px;font-size:14px;font-weight:500;cursor:pointer;border-radius:8px;border:1.5px solid #378ADD;color:#0C447C;background:#E6F1FB}
+#play-btn:hover{background:#B5D4F4}
+#play-btn:disabled{opacity:.4;cursor:default}
+#game-screen{display:none;flex-direction:column;align-items:center;gap:10px}
+</style>
+
+<div id="wrap">
+  <div id="select-screen">
+    <div style="text-align:center">
+      <div style="font-size:17px;font-weight:500;color:var(--color-text-primary)">เลือก Mascot ของคุณ</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-top:3px">แต่ละตัวมีสกิลพิเศษต่างกัน • เวลา 30 วินาที</div>
+    </div>
+    <div id="mascot-grid"></div>
+    <button id="play-btn" disabled>เลือก Mascot ก่อน</button>
+  </div>
+
+  <div id="game-screen">
+    <div id="hud">
+      <div class="hud-card">
+        <div class="hud-label">iFacts</div>
+        <div class="hud-val" id="h-facts">0</div>
+        <div class="hud-bar"><div class="hud-fill" id="b-facts" style="width:0%;background:#378ADD"></div></div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-label">Inspiring</div>
+        <div class="hud-val" id="h-inspire">0</div>
+        <div class="hud-bar"><div class="hud-fill" id="b-inspire" style="width:0%;background:#7F77DD"></div></div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-label">Hero</div>
+        <div class="hud-val" id="h-hero">0</div>
+        <div class="hud-bar"><div class="hud-fill" id="b-hero" style="width:0%;background:#1D9E75"></div></div>
+      </div>
+      <div class="hud-card" style="flex:.7">
+        <div class="hud-label">คะแนน</div>
+        <div class="hud-val" id="h-score">0</div>
+      </div>
+      <div id="timer-card">
+        <div class="hud-label">เวลา</div>
+        <div id="timer-val">30</div>
+        <div id="timer-bar-wrap"><div id="timer-bar" style="width:100%"></div></div>
+      </div>
+      <div class="hud-card" style="flex:.5;cursor:pointer" id="change-btn">
+        <div class="hud-label">เปลี่ยน</div>
+        <div style="font-size:11px;font-weight:500;color:#185FA5" id="mascot-tag">-</div>
+      </div>
+    </div>
+    <canvas id="cv" width="640" height="340"></canvas>
+    <div id="msg-row">
+      <span id="msg">กด Start เพื่อเริ่ม</span>
+      <span id="popup"></span>
+    </div>
+    <div id="btns"><button id="start-btn">▶ Start</button></div>
+    <div class="d-pad">
+      <div></div><button class="d-btn" id="bu">↑</button><div></div>
+      <button class="d-btn" id="bl">←</button><div></div><button class="d-btn" id="br">→</button>
+    </div>
+    <div id="legend">
+      <div class="leg"><div class="leg-dot" style="background:#378ADD"></div>iFacts +10</div>
+      <div class="leg"><div class="leg-dot" style="background:#7F77DD"></div>Inspiring +15</div>
+      <div class="leg"><div class="leg-dot" style="background:#1D9E75"></div>Hero +20</div>
+      <div class="leg"><div class="leg-dot" style="background:#E24B4A"></div>อุปสรรค -5</div>
+      <div class="leg"><div class="leg-dot" style="background:#EF9F27"></div>item วิ่งหนี!</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MASCOTS=[
+  {id:'fighter',name:'Fighter',desc:'สกิล: กระโดดสูง\nพลัง SSI!',hat:'red',outfit:'#B5D4F4',outfitText:'SSI',accentColor:'#E24B4A',jumpBonus:-3},
+  {id:'planner',name:'Planner',desc:'สกิล: วิ่งเร็ว\nพร้อมแผนงาน',hat:'bow',outfit:'#F4C0D1',outfitText:'',accentColor:'#D4537E',speedBonus:1.5},
+  {id:'star',name:'Star',desc:'สกิล: +bonus คะแนน\nทุก item',hat:'bow2',outfit:'#fff',outfitText:'SSI',accentColor:'#FAC775',pointBonus:1.3},
+  {id:'worker',name:'Worker',desc:'สกิล: อุปสรรค\nไม่หักคะแนน',hat:'helmet',outfit:'#FAC775',outfitText:'SSI',accentColor:'#888780',immune:true},
+  {id:'bio',name:'Bio',desc:'สกิล: เวลา +10 วิ\nพิเศษ!',hat:'straw',outfit:'#97C459',outfitText:'BIO',accentColor:'#3B6D11',timeBonus:10}
+];
+
+function drawMascot(ctx,px,py,frame,onGround,m){
+  const x=px,y=py;
+  const legs=onGround?(frame%2===0?[[-5,8],[5,-5]]:[[5,8],[-5,-5]]):[[0,0],[0,0]];
+  ctx.fillStyle='#888';
+  ctx.fillRect(x+6+legs[0][0],y+28,6,10+legs[0][1]);
+  ctx.fillRect(x+16+legs[1][0],y+28,6,10+legs[1][1]);
+  ctx.fillStyle='#aaa';ctx.beginPath();ctx.roundRect(x+2,y+16,24,18,5);ctx.fill();
+  ctx.fillStyle=m.outfit;ctx.beginPath();ctx.roundRect(x+4,y+18,20,14,4);ctx.fill();
+  if(m.outfitText){ctx.fillStyle=m.accentColor;ctx.font='bold 7px sans-serif';ctx.textAlign='center';ctx.fillText(m.outfitText,x+14,y+27);}
+  ctx.fillStyle='#bbb';ctx.beginPath();ctx.arc(x+14,y+12,13,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#999';ctx.lineWidth=0.5;ctx.stroke();
+  if(m.hat==='red'){ctx.fillStyle='#E24B4A';ctx.fillRect(x+4,y+2,20,5);ctx.fillStyle='#fff';ctx.fillRect(x+4,y+3,20,2);}
+  else if(m.hat==='bow'||m.hat==='bow2'){
+    ctx.fillStyle=m.hat==='bow'?'#F4C0D1':'#B5D4F4';
+    ctx.beginPath();ctx.arc(x+8,y+1,5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+16,y+1,5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+12,y+2,2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#aaa';ctx.beginPath();ctx.moveTo(x+11,y+0);ctx.lineTo(x+14,y-8);ctx.lineTo(x+17,y+0);ctx.closePath();ctx.fill();
+  } else if(m.hat==='helmet'){
+    ctx.fillStyle='#eee';ctx.beginPath();ctx.arc(x+14,y+5,13,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#ddd';ctx.fillRect(x+2,y+5,24,4);
+    ctx.fillStyle='#E24B4A';ctx.beginPath();ctx.arc(x+14,y+6,4,0,Math.PI*2);ctx.fill();
+  } else if(m.hat==='straw'){
+    ctx.fillStyle='#EF9F27';ctx.beginPath();ctx.ellipse(x+14,y+3,16,6,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#BA7517';ctx.beginPath();ctx.arc(x+14,y-1,9,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#3B6D11';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText('🌿',x+14,y+2);
+  }
+  if(m.id==='planner'||m.id==='star'||m.id==='bio'){
+    ctx.strokeStyle='#555';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(x+9,y+13,3,-Math.PI*.1,-Math.PI*.9,true);ctx.stroke();
+    ctx.beginPath();ctx.arc(x+19,y+13,3,-Math.PI*.1,-Math.PI*.9,true);ctx.stroke();
+    if(m.id==='planner'){ctx.fillStyle='#E24B4A';ctx.beginPath();ctx.arc(x+12,y+18,2,0,Math.PI,false);ctx.fill();}
+  } else {
+    ctx.fillStyle='#333';ctx.beginPath();ctx.arc(x+9,y+13,2.5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+19,y+13,2.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#555';ctx.lineWidth=1;ctx.beginPath();ctx.arc(x+14,y+19,4,0,Math.PI,false);ctx.stroke();
+  }
+  if(m.id==='star'||m.id==='bio'){
+    ctx.fillStyle='rgba(255,150,150,0.35)';
+    ctx.beginPath();ctx.ellipse(x+6,y+16,4,2.5,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(x+22,y+16,4,2.5,0,0,Math.PI*2);ctx.fill();
+  }
+}
+
+const grid=document.getElementById('mascot-grid');
+let selectedMascot=null;
+MASCOTS.forEach(m=>{
+  const card=document.createElement('div');
+  card.className='mascot-card';
+  card.innerHTML=`<canvas width="60" height="70" style="width:60px;height:70px"></canvas><div class="mascot-name">${m.name}</div><div class="mascot-desc">${m.desc}</div>`;
+  const pc=card.querySelector('canvas').getContext('2d');
+  pc.scale(1.5,1.5);drawMascot(pc,4,8,0,true,m);
+  card.addEventListener('click',()=>{
+    document.querySelectorAll('.mascot-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');selectedMascot=m;
+    const pb=document.getElementById('play-btn');pb.disabled=false;pb.textContent=`เล่นเป็น ${m.name}!`;
+  });
+  grid.appendChild(card);
+});
+document.getElementById('play-btn').addEventListener('click',()=>{
+  if(!selectedMascot)return;
+  document.getElementById('select-screen').style.display='none';
+  const gs=document.getElementById('game-screen');gs.style.display='flex';
+  document.getElementById('mascot-tag').textContent=selectedMascot.name;
+  initGame();
+});
+document.getElementById('change-btn').addEventListener('click',()=>{
+  if(raf)cancelAnimationFrame(raf);
+  clearInterval(timerInterval);running=false;
+  document.getElementById('game-screen').style.display='none';
+  document.getElementById('select-screen').style.display='flex';
+});
+
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+const W=640,H=340,TILE=32,COLS=W/TILE;
+const P={sky:'#E6F1FB',ground:'#639922',groundDark:'#3B6D11',facts:'#378ADD',inspire:'#7F77DD',hero:'#1D9E75',obstacle:'#E24B4A'};
+const GROUND_Y=H-TILE*2;
+const TOTAL_TIME=30;
+const ITEM_TYPES=[
+  {type:'facts',color:P.facts,label:'iF',points:10,msg:'iFacts +1!'},
+  {type:'inspire',color:P.inspire,label:'IN',points:15,msg:'Inspiring +1!'},
+  {type:'hero',color:P.hero,label:'H',points:20,msg:'Hero +1!'}
+];
+
+let state,player,items,obstacles,particles,running=false,raf,frameCount=0,bgOffset=0;
+let timeLeft=TOTAL_TIME,timerInterval=null,gameOver=false;
+
+function initGame(){
+  const m=selectedMascot;
+  player={x:80,y:GROUND_Y-38,w:28,h:38,vy:0,onGround:false,frame:0};
+  items=[];obstacles=[];particles=[];
+  state={facts:0,inspire:0,hero:0,score:0};
+  frameCount=0;bgOffset=0;gameOver=false;
+  timeLeft=TOTAL_TIME+(m.timeBonus||0);
+  updateHUD();updateTimer();
+  spawnItems();
+}
+
+function spawnItems(){
+  const xs=[160,240,320,400,480,560];
+  xs.forEach((x,i)=>{
+    const t=ITEM_TYPES[i%3];
+    const yBase=GROUND_Y-38;
+    items.push({
+      ...t,x,y:yBase-40*(i%3),
+      w:26,h:26,collected:false,bob:Math.random()*Math.PI*2,
+      vx:(Math.random()-.5)*2.5,
+      vy:(Math.random()-.5)*1.5,
+      bounceY:yBase-40*(i%3),
+      phase:Math.random()*Math.PI*2
+    });
+  });
+  [300,460].forEach(x=>{
+    obstacles.push({x,y:GROUND_Y-28,w:24,h:28,active:true,vx:1.2+Math.random()});
+  });
+}
+
+function updateHUD(){
+  ['facts','inspire','hero'].forEach(k=>{
+    document.getElementById('h-'+k).textContent=state[k];
+    document.getElementById('b-'+k).style.width=Math.min(state[k]*10,100)+'%';
+  });
+  document.getElementById('h-score').textContent=state.score;
+}
+
+function updateTimer(){
+  const pct=Math.max(0,(timeLeft/( TOTAL_TIME+(selectedMascot.timeBonus||0)))*100);
+  document.getElementById('timer-val').textContent=Math.ceil(timeLeft);
+  const bar=document.getElementById('timer-bar');
+  bar.style.width=pct+'%';
+  bar.style.background=pct>50?'#1D9E75':pct>25?'#EF9F27':'#E24B4A';
+  const tv=document.getElementById('timer-val');
+  tv.style.color=pct>25?'var(--color-text-primary)':'#E24B4A';
+}
+
+function showPopup(msg,color){
+  const el=document.getElementById('popup');
+  el.textContent=msg;el.style.background=color+'22';el.style.color=color;el.style.opacity='1';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',1200);
+}
+function spawnParticles(x,y,color){
+  for(let i=0;i<8;i++) particles.push({x:x+13,y:y+13,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5-2,life:1,color,size:4+Math.random()*4});
+}
+
+const keys={},touchDirs={};
+document.addEventListener('keydown',e=>{keys[e.key]=true;if(['ArrowUp','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();});
+document.addEventListener('keyup',e=>keys[e.key]=false);
+[['bu','up'],['bl','left'],['br','right']].forEach(([id,dir])=>{
+  const el=document.getElementById(id);
+  el.addEventListener('mousedown',()=>touchDirs[dir]=true);
+  el.addEventListener('mouseup',()=>touchDirs[dir]=false);
+  el.addEventListener('touchstart',e=>{e.preventDefault();touchDirs[dir]=true},{passive:false});
+  el.addEventListener('touchend',()=>touchDirs[dir]=false);
+});
+
+function overlap(a,b,bonus=0){return a.x-bonus<b.x+b.w&&a.x+a.w+bonus>b.x&&a.y-bonus<b.y+b.h&&a.y+a.h+bonus>b.y;}
+
+function endGame(reason){
+  running=false;gameOver=true;
+  clearInterval(timerInterval);
+  cancelAnimationFrame(raf);
+  const left=items.filter(i=>!i.collected).length;
+  document.getElementById('msg').textContent=
+    reason==='time'
+      ? `หมดเวลา! เก็บได้ ${6-left}/6 item — คะแนน ${state.score}`
+      : `สำเร็จ! เก็บครบใน ${TOTAL_TIME+(selectedMascot.timeBonus||0)-Math.ceil(timeLeft)} วิ — คะแนน ${state.score}`;
+  document.getElementById('start-btn').textContent='🔄 เล่นใหม่';
+  draw();
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    if(!running)return;
+    timeLeft=Math.max(0,timeLeft-0.1);
+    updateTimer();
+    if(timeLeft<=0) endGame('time');
+  },100);
+}
+
+function update(){
+  frameCount++;bgOffset=(bgOffset+0.5)%W;
+  const m=selectedMascot;
+  const speed=3+(m.speedBonus||0);
+  const jumpPow=-10+(m.jumpBonus||0);
+
+  if((keys['ArrowLeft']||touchDirs.left)&&player.x>10)player.x-=speed;
+  if((keys['ArrowRight']||touchDirs.right)&&player.x<W-player.w-10)player.x+=speed;
+  if((keys['ArrowUp']||keys[' ']||touchDirs.up)&&player.onGround){player.vy=jumpPow;player.onGround=false;}
+  player.vy+=0.45;player.y+=player.vy;
+  if(player.y>=GROUND_Y-player.h){player.y=GROUND_Y-player.h;player.vy=0;player.onGround=true;}
+  if(frameCount%6===0)player.frame=(player.frame+1)%4;
+
+  items.forEach(item=>{
+    if(item.collected)return;
+    item.phase+=0.04;
+    item.x+=item.vx;
+    item.y=item.bounceY+Math.sin(item.phase)*28;
+    if(item.x<20||item.x>W-40) item.vx*=-1;
+    if(overlap(player,item)){
+      item.collected=true;
+      state[item.type]++;
+      const bonus=m.pointBonus||1;
+      state.score+=Math.round(item.points*bonus);
+      spawnParticles(item.x,item.y,item.color);
+      showPopup(item.msg+(bonus>1?' x'+bonus.toFixed(1):''),item.color);
+      updateHUD();
+    }
+  });
+
+  obstacles.forEach(ob=>{
+    if(!ob.active)return;
+    ob.x+=ob.vx;
+    if(ob.x<10||ob.x>W-40) ob.vx*=-1;
+    if(overlap(player,ob)){
+      ob.active=false;
+      if(!m.immune){state.score=Math.max(0,state.score-5);updateHUD();showPopup('อุปสรรค! -5',P.obstacle);}
+      else showPopup('Worker ภูมิคุ้มกัน!','#1D9E75');
+      spawnParticles(ob.x,ob.y,P.obstacle);
+    }
+  });
+
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=0.05;});
+
+  if(items.every(i=>i.collected)) endGame('win');
+}
+
+function rr(x,y,w,h,r,fill,stroke){
+  ctx.beginPath();ctx.roundRect(x,y,w,h,r);
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=P.sky;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff';
+  [[50,35,80,18],[200,50,100,16],[430,25,90,20],[560,42,70,14]].forEach(([x,y,w,h])=>{
+    const cx=((x-bgOffset*.3+W)%(W+100))-50;
+    ctx.beginPath();ctx.ellipse(cx+w/2,y,w/2,h/2,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx+w/4,y+3,w/3,h/3,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx+w*.7,y+3,w/3,h/3,0,0,Math.PI*2);ctx.fill();
+  });
+  for(let i=0;i<COLS;i++){
+    ctx.fillStyle=P.ground;ctx.fillRect(i*TILE,GROUND_Y,TILE,TILE);
+    ctx.fillStyle=P.groundDark;ctx.fillRect(i*TILE,GROUND_Y+TILE*.5,TILE,TILE*.5);
+    ctx.fillStyle='#97C459';ctx.fillRect(i*TILE,GROUND_Y,TILE,5);
+    ctx.fillRect(i*TILE,GROUND_Y+TILE,TILE,H);
+  }
+
+  items.forEach(item=>{
+    if(item.collected)return;
+    const ix=item.x,iy=item.y;
+    ctx.globalAlpha=0.12;ctx.fillStyle=item.color;
+    ctx.beginPath();ctx.ellipse(ix+13,GROUND_Y-4,14,4,0,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+    rr(ix,iy,item.w,item.h,6,item.color+'33',item.color);
+    ctx.fillStyle=item.color;ctx.font='bold 9px sans-serif';ctx.textAlign='center';
+    ctx.fillText(item.label,ix+item.w/2,iy+item.h/2+3);
+    ctx.fillStyle='rgba(0,0,0,0.18)';ctx.font='9px sans-serif';ctx.textAlign='left';
+    ctx.fillText(item.type==='facts'?'iFacts':item.type==='inspire'?'Inspiring':'Hero',ix,iy-5);
+    ctx.strokeStyle=item.color+'66';ctx.lineWidth=0.5;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(ix+13,GROUND_Y-4);ctx.lineTo(ix+13,iy+item.h);ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  obstacles.forEach(ob=>{
+    if(!ob.active)return;
+    rr(ob.x,ob.y,ob.w,ob.h,4,P.obstacle+'33');
+    ctx.strokeStyle=P.obstacle;ctx.lineWidth=1.5;ctx.strokeRect(ob.x,ob.y,ob.w,ob.h);
+    ctx.fillStyle=P.obstacle;ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+    ctx.fillText('!',ob.x+ob.w/2,ob.y+ob.h/2+5);
+  });
+
+  if(selectedMascot) drawMascot(ctx,player.x,player.y,player.frame,player.onGround,selectedMascot);
+
+  particles.forEach(p=>{
+    ctx.globalAlpha=p.life;rr(p.x-p.size/2,p.y-p.size/2,p.size,p.size,2,p.color);
+  });
+  ctx.globalAlpha=1;
+
+  if(selectedMascot?.id==='star'&&frameCount%20<10){
+    ctx.fillStyle='#FAC775';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText('★',player.x-8,player.y-4);ctx.fillText('★',player.x+30,player.y);
+  }
+
+  if(gameOver){
+    ctx.fillStyle='rgba(0,0,0,0.45)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#fff';ctx.font='bold 28px sans-serif';ctx.textAlign='center';
+    ctx.fillText(timeLeft<=0?'หมดเวลา!':'ยอดเยี่ยม!',W/2,H/2-20);
+    ctx.font='16px sans-serif';
+    ctx.fillText('คะแนน: '+state.score,W/2,H/2+16);
+    ctx.font='13px sans-serif';ctx.fillStyle='rgba(255,255,255,0.7)';
+    ctx.fillText('กด เล่นใหม่ เพื่อเริ่มอีกครั้ง',W/2,H/2+44);
+  }
+}
+
+function gameLoop(){update();draw();if(running)raf=requestAnimationFrame(gameLoop);}
+document.getElementById('start-btn').addEventListener('click',()=>{
+  if(raf)cancelAnimationFrame(raf);
+  clearInterval(timerInterval);
+  initGame();running=true;gameOver=false;
+  document.getElementById('msg').textContent='วิ่งเก็บ item ทุกตัวให้ครบก่อนหมดเวลา!';
+  document.getElementById('start-btn').textContent='🔄 เริ่มใหม่';
+  startTimer();
+  raf=requestAnimationFrame(gameLoop);
+});
+</script>
