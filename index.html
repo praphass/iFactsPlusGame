@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iFacts+ Game v.10</title>
+<title>iFacts+ Game v.11</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#f5f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;min-height:100vh;padding:14px}
@@ -110,7 +110,7 @@ canvas{border:0.5px solid #B4B2A9;border-radius:8px;display:block;width:100%;max
 </head>
 <body>
 <div id="app">
-<h1>🎮 iFacts+ Game v.10</h1>
+<h1>🎮 iFacts+ Game v.11</h1>
 
 <!-- NAME -->
 <div id="name-screen" class="screen active">
@@ -381,28 +381,39 @@ document.getElementById('admin-add-btn').addEventListener('click',async()=>{
 });
 
 document.getElementById('admin-save-btn').addEventListener('click',async()=>{
-  // collect all field values and PATCH each
   const rows=document.querySelectorAll('#admin-rewards-list .reward-row');
-  let ok=0,fail=0;
+  let ok=0,fail=0;const errMsgs=[];
   setAdminStatus('กำลังบันทึก...','#888780');
   for(const row of rows){
     const fields=row.querySelectorAll('[data-id]');
     const id=fields[0].dataset.id;
     const data={};
     fields.forEach(f=>{
-      const v=f.tagName==='TEXTAREA'?f.value:f.value;
-      data[f.dataset.field]=f.dataset.field==='min_score'?parseInt(v)||0:v;
+      const raw=f.value;
+      if(f.dataset.field==='min_score'){
+        const n=parseInt(raw,10);
+        data.min_score = Number.isFinite(n) ? n : 0;
+      } else if(f.dataset.field==='image_url'){
+        const trimmed=(raw||'').trim();
+        data.image_url = trimmed.length>0 ? trimmed : null;
+      } else {
+        data[f.dataset.field] = raw;
+      }
     });
     try{
       const res=await fetch(SUPA_URL+'/rest/v1/rewards?id=eq.'+id,{
         method:'PATCH',headers:HDR_W,body:JSON.stringify(data)
       });
-      if(!res.ok)throw new Error(res.status);
+      if(!res.ok){
+        const errBody=await res.text();
+        throw new Error(res.status+': '+errBody.slice(0,150));
+      }
       ok++;
-    }catch(e){fail++;}
+    }catch(e){fail++;errMsgs.push(e.message);console.error('PATCH failed for id='+id,e.message,data);}
   }
   await loadRewards();renderAdminList();
-  setAdminStatus('บันทึก '+ok+' รายการ'+(fail?' | ล้มเหลว '+fail+' รายการ (ต้องเพิ่ม UPDATE policy ใน rewards)':'')+(ok>0?' ✅':''),'#1D9E75');
+  const lastErr=errMsgs.length?(' \u2014 '+errMsgs[errMsgs.length-1]):'';
+  setAdminStatus('บันทึก '+ok+' รายการ'+(fail?' | ล้มเหลว '+fail+' รายการ'+lastErr:'')+(ok>0?' ✅':''),fail?'#E24B4A':'#1D9E75');
 });
 
 function setAdminStatus(msg,color){
