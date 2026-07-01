@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iFacts+ Game v.12</title>
+<title>iFacts+ Game v.14</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#f5f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;min-height:100vh;padding:14px}
@@ -38,33 +38,56 @@ table.lb tr.me td{background:#E6F1FB;font-weight:500}
 #play-btn{padding:8px 32px;font-size:13px;font-weight:500;cursor:pointer;border-radius:8px;border:1.5px solid #378ADD;color:#0C447C;background:#E6F1FB}
 #play-btn:disabled{opacity:.4;cursor:default}
 /* GAME */
-#game-screen{display:none;flex-direction:column;width:100%}
-#hud{display:flex;gap:5px;margin-bottom:7px}
-.hud-card{flex:1;background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;padding:5px 6px;text-align:center}
-.hud-label{font-size:9px;color:#888780}
-.hud-val{font-size:13px;font-weight:500;color:#2C2C2A}
-.hud-bar{height:4px;border-radius:2px;background:#F1EFE8;margin-top:2px;overflow:hidden}
+#game-screen{display:none;flex-direction:column;align-items:center;width:100%}
+
+/* ── Size slider ── */
+#size-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#888780;margin-bottom:6px;width:100%;max-width:700px}
+#size-row input{width:80px;accent-color:#378ADD}
+
+/* ── Canvas wrapper: canvas + HUD overlay ── */
+#canvas-wrap{position:relative;width:100%;max-width:700px;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1)}
+#cv{display:block;width:100%;height:auto;border-radius:10px}
+
+/* ── HUD overlay inside canvas ── */
+#hud-overlay{position:absolute;top:0;left:0;right:0;pointer-events:none;padding:6px 8px}
+
+/* single top row: score + lives + timer + trophy only */
+#hud-top{display:flex;gap:5px;align-items:center;justify-content:flex-end}
+.hud-pill{background:rgba(255,255,255,0.88);backdrop-filter:blur(6px);border:0.5px solid rgba(0,0,0,.1);border-radius:20px;padding:4px 10px;text-align:center;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.hud-pill .icon{font-size:14px;line-height:1}
+.hud-pill .val{font-size:13px;font-weight:700;color:#2C2C2A;line-height:1}
+/* timer color changes */
+.hud-pill.timer-ok .val{color:#1D9E75}
+.hud-pill.timer-warn .val{color:#EF9F27}
+.hud-pill.timer-danger .val{color:#E24B4A}
+/* trophy button */
+#hud-pill-lb{pointer-events:all;cursor:pointer;background:rgba(230,241,251,.92)}
+#hud-pill-lb:active{background:rgba(180,210,250,.95)}
+
+/* hide phase row from canvas overlay - moved outside */
+#phase-row{display:none}
+.hud-label{display:none}
+.hud-val{font-size:13px;font-weight:600;color:#2C2C2A}
+.hud-bar-wrap{display:none}
 .hud-fill{height:100%;border-radius:2px;transition:width .2s}
-canvas{border:0.5px solid #B4B2A9;border-radius:8px;display:block;width:100%;max-width:640px}
-#msg-row{min-height:20px;display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap}
+
+/* bottom controls */
+#game-controls{width:100%;max-width:700px;display:flex;flex-direction:column;gap:6px;margin-top:6px}
+#msg-row{min-height:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 #msg{font-size:11px;color:#888780}
 #popup{font-size:11px;font-weight:500;padding:2px 9px;border-radius:8px;opacity:0;transition:opacity .3s}
-#btns{display:flex;gap:7px;margin-top:6px;align-items:center;flex-wrap:wrap}
+#save-banner{display:none;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:500;text-align:center}
+#btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 #btns button{padding:5px 13px;font-size:12px;cursor:pointer;border-radius:8px;border:0.5px solid #B4B2A9;background:#fff;color:#2C2C2A}
 #btns button:hover{background:#F1EFE8}
 #vol-row{display:flex;align-items:center;gap:5px;margin-left:auto;font-size:10px;color:#888780}
 #vol-row input{width:52px;accent-color:#378ADD}
-.d-pad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px;margin-top:8px}
+.d-pad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px}
 .d-btn{background:#fff;border:0.5px solid #B4B2A9;border-radius:8px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#2C2C2A;user-select:none}
 .d-btn:active{background:#F1EFE8}
-#phase-row{display:flex;gap:4px;margin-bottom:5px}
-.phase-card{flex:1;padding:3px 4px;border-radius:5px;text-align:center;font-size:9px;border:1px solid #D3D1C7;background:#fff;color:#888780;white-space:nowrap;transition:all .3s}
-.phase-card.active{font-weight:600;color:#2C2C2A;background:#FFF8E1;border-color:#EF9F27}
-.phase-card.done{background:#E6F1FB;border-color:#378ADD}
-#legend{display:flex;gap:8px;font-size:10px;color:#888780;margin-top:7px;flex-wrap:wrap}
+#legend{display:flex;gap:8px;font-size:10px;color:#888780;flex-wrap:wrap}
 .leg{display:flex;align-items:center;gap:3px}
 .leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
-#save-banner{display:none;padding:7px 12px;border-radius:8px;font-size:11px;font-weight:500;text-align:center;margin-top:5px}
 .dot-live{width:7px;height:7px;border-radius:50%;background:#1D9E75;display:inline-block;animation:blink 1.5s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
@@ -110,7 +133,7 @@ canvas{border:0.5px solid #B4B2A9;border-radius:8px;display:block;width:100%;max
 </head>
 <body>
 <div id="app">
-<h1>🎮 iFacts+ Game v.12</h1>
+<h1>🎮 iFacts+ Game v.14</h1>
 
 <!-- NAME -->
 <div id="name-screen" class="screen active">
@@ -148,42 +171,73 @@ canvas{border:0.5px solid #B4B2A9;border-radius:8px;display:block;width:100%;max
 
 <!-- GAME -->
 <div id="game-screen">
-  <div id="hud">
-    <div class="hud-card"><div class="hud-label">iFacts</div><div class="hud-val" id="h-facts">0</div><div class="hud-bar"><div class="hud-fill" id="b-facts" style="width:0%;background:#378ADD"></div></div></div>
-    <div class="hud-card"><div class="hud-label">Inspiring</div><div class="hud-val" id="h-inspire">0</div><div class="hud-bar"><div class="hud-fill" id="b-inspire" style="width:0%;background:#7F77DD"></div></div></div>
-    <div class="hud-card"><div class="hud-label">Hero</div><div class="hud-val" id="h-hero">0</div><div class="hud-bar"><div class="hud-fill" id="b-hero" style="width:0%;background:#1D9E75"></div></div></div>
-    <div class="hud-card" style="flex:.8"><div class="hud-label">คะแนน</div><div class="hud-val" id="h-score">0</div></div>
-    <div class="hud-card" style="flex:.65"><div class="hud-label">ชีวิต</div><div id="h-lives" style="font-size:13px">❤️❤️❤️</div></div>
-    <div class="hud-card" style="flex:.6"><div class="hud-label">เวลา</div><div id="timer-val" style="font-size:14px;font-weight:500;color:#2C2C2A">60</div><div class="hud-bar"><div id="timer-bar" style="width:100%;height:4px;border-radius:2px;background:#1D9E75;transition:width .1s,background .3s"></div></div></div>
-    <div class="hud-card" style="flex:.5;cursor:pointer" id="to-lb-btn"><div class="hud-label">🏆 Board</div><div id="mascot-tag" style="font-size:9px;font-weight:500;color:#185FA5">-</div></div>
+  <!-- SIZE SLIDER -->
+  <div id="size-row">
+    🖥️ ขนาดจอ
+    <input type="range" id="size-slider" min="300" max="760" value="640" step="10">
+    <span id="size-label">640px</span>
   </div>
-  <div id="phase-row">
-    <div class="phase-card" id="ph0">0s: เริ่ม</div>
-    <div class="phase-card" id="ph1">5s: 🐍</div>
-    <div class="phase-card" id="ph2">10s: 🐊</div>
-    <div class="phase-card" id="ph3">15s: 🦎</div>
-    <div class="phase-card" id="ph4">20s: 🐦</div>
-  </div>
-  <canvas id="cv" width="640" height="300"></canvas>
-  <div id="msg-row"><span id="msg">กด Start</span><span id="popup"></span></div>
-  <div id="save-banner"></div>
-  <div id="btns">
-    <button id="start-btn">▶ Start</button>
-    <button id="back-btn">← กลับ</button>
-    <div id="vol-row">🎵<input type="range" id="bgm-vol" min="0" max="1" step="0.05" value="0.35"> 🔔<input type="range" id="sfx-vol" min="0" max="1" step="0.05" value="0.7"></div>
-  </div>
-  <div class="d-pad">
-    <div></div><button class="d-btn" id="bu">↑</button><div></div>
-    <button class="d-btn" id="bl">←</button><div></div><button class="d-btn" id="br">→</button>
-  </div>
-  <div id="legend">
-    <div class="leg"><div class="leg-dot" style="background:#378ADD"></div>iFacts +10</div>
-    <div class="leg"><div class="leg-dot" style="background:#7F77DD"></div>Inspiring +15</div>
-    <div class="leg"><div class="leg-dot" style="background:#1D9E75"></div>Hero +20</div>
-    <div class="leg"><div class="leg-dot" style="background:#5C8A2E"></div>🐍งู</div>
-    <div class="leg"><div class="leg-dot" style="background:#6B8C42"></div>🐊จระเข้</div>
-    <div class="leg"><div class="leg-dot" style="background:#C97A2A"></div>🦎ตุ๊กแก</div>
-    <div class="leg"><div class="leg-dot" style="background:#E24B4A"></div>🐦นก=GameOver</div>
+
+  <!-- CANVAS + HUD OVERLAY -->
+  <div id="canvas-wrap">
+    <canvas id="cv" width="640" height="300"></canvas>
+
+    <!-- HUD overlay — score / lives / timer / trophy only -->
+    <div id="hud-overlay">
+      <div id="hud-top">
+        <!-- คะแนน -->
+        <div class="hud-pill" style="background:rgba(230,241,251,.92)">
+          <span class="icon">⭐</span>
+          <span class="val" id="h-score">0</span>
+        </div>
+        <!-- ชีวิต -->
+        <div class="hud-pill">
+          <span id="h-lives" class="val" style="font-size:12px;letter-spacing:-1px">❤️❤️❤️</span>
+        </div>
+        <!-- เวลา -->
+        <div class="hud-pill timer-ok" id="hud-timer-pill">
+          <span class="icon">⏱</span>
+          <span class="val" id="timer-val">60</span>
+        </div>
+        <!-- trophy / board -->
+        <div class="hud-pill" id="hud-pill-lb">
+          <span class="icon">🏆</span>
+          <span class="val" id="mascot-tag" style="font-size:10px;color:#185FA5">Board</span>
+        </div>
+      </div>
+    </div><!-- /hud-overlay -->
+    <!-- phase-row hidden but keep in DOM for JS -->
+    <div id="phase-row" style="display:none">
+      <div class="phase-card" id="ph0"></div>
+      <div class="phase-card" id="ph1"></div>
+      <div class="phase-card" id="ph2"></div>
+      <div class="phase-card" id="ph3"></div>
+      <div class="phase-card" id="ph4"></div>
+    </div>
+  </div><!-- /canvas-wrap -->
+
+  <!-- CONTROLS BELOW CANVAS -->
+  <div id="game-controls">
+    <div id="msg-row"><span id="msg">กด Start</span><span id="popup"></span></div>
+    <div id="save-banner"></div>
+    <div id="btns">
+      <button id="start-btn">▶ Start</button>
+      <button id="back-btn">← กลับ</button>
+      <div id="vol-row">🎵<input type="range" id="bgm-vol" min="0" max="1" step="0.05" value="0.35"> 🔔<input type="range" id="sfx-vol" min="0" max="1" step="0.05" value="0.7"></div>
+    </div>
+    <div class="d-pad">
+      <div></div><button class="d-btn" id="bu">↑</button><div></div>
+      <button class="d-btn" id="bl">←</button><div></div><button class="d-btn" id="br">→</button>
+    </div>
+    <div id="legend">
+      <div class="leg"><div class="leg-dot" style="background:#378ADD"></div>iFacts +10</div>
+      <div class="leg"><div class="leg-dot" style="background:#7F77DD"></div>Inspiring +15</div>
+      <div class="leg"><div class="leg-dot" style="background:#1D9E75"></div>Hero +20</div>
+      <div class="leg"><div class="leg-dot" style="background:#5C8A2E"></div>🐍งู</div>
+      <div class="leg"><div class="leg-dot" style="background:#6B8C42"></div>🐊จระเข้</div>
+      <div class="leg"><div class="leg-dot" style="background:#C97A2A"></div>🦎ตุ๊กแก</div>
+      <div class="leg"><div class="leg-dot" style="background:#E24B4A"></div>🐦นก=GameOver</div>
+    </div>
   </div>
 </div>
 </div>
@@ -500,7 +554,9 @@ function showScreen(id){
   document.getElementById('game-screen').style.display=id==='game-screen'?'flex':'none';
   if(id==='game-screen')document.getElementById('save-banner').style.display='none';
 }
-document.getElementById('to-lb-btn').addEventListener('click',()=>{if(raf)cancelAnimationFrame(raf);clearInterval(timerInterval);running=false;stopBGM();loadLeaderboard();showScreen('select-screen');});
+// trophy board button (inside canvas HUD overlay)
+const _lbBtn = document.getElementById('hud-pill-lb');
+if(_lbBtn) _lbBtn.addEventListener('click',()=>{if(raf)cancelAnimationFrame(raf);clearInterval(timerInterval);running=false;stopBGM();loadLeaderboard();showScreen('select-screen');});
 document.getElementById('back-btn').addEventListener('click',()=>{if(raf)cancelAnimationFrame(raf);clearInterval(timerInterval);running=false;stopBGM();loadLeaderboard();showScreen('select-screen');});
 
 // AUDIO
@@ -544,9 +600,9 @@ function updatePhaseUI(){const ph=getCurrentPhase();const idx=PHASES.indexOf(ph)
 function initGame(){const m=selectedMascot;player={x:60,y:GROUND_Y-38,w:28,h:38,vy:0,onGround:false,frame:0};items=[];obstacles=[];reptiles=[];birds=[];particles=[];state={facts:0,inspire:0,hero:0,score:0};frameCount=0;bgOffset=0;gameOver=false;invincible=0;lives=MAX_LIVES;elapsedTime=0;birdSpawnTimer=0;timeLeft=TOTAL_TIME+(m.timeBonus||0);updateHUD();updateTimer();updateLives();updatePhaseUI();[160,250,340,420,510,570].forEach((x,i)=>{const t=ITEM_TYPES[i%3];items.push({...t,x,y:GROUND_Y-44-36*(i%3),w:40,h:28,collected:false,vx:(Math.random()>.5?1:-1)*1.8,phase:Math.random()*Math.PI*2,bounceY:GROUND_Y-44-36*(i%3)});});[290,460].forEach(x=>{obstacles.push({x,y:GROUND_Y-28,w:24,h:28,active:true,vx:1.4});});playBGM();}
 function spawnReptilePhase(count){while(reptiles.length<count){const ti=reptiles.length%3;const rt=REPTILE_TYPES[ti];const dir=reptiles.length%2===0?1:-1;reptiles.push({...rt,x:dir>0?-90:W+90,y:GROUND_Y-rt.h/2-2,dir,vx:rt.speed*dir,frame:0});}if(reptiles.length>count)reptiles.splice(count);}
 function spawnBird(){const dir=Math.random()>.5?1:-1;const flyY=40+Math.random()*55;birds.push({x:dir>0?-80:W+80,y:flyY,vx:dir*3.5,vy:0,dir,flapFrame:0,flapTimer:0,state:'fly',diveTarget:{x:player.x,y:player.y},danger:true,w:64,h:36,warned:false});}
-function updateHUD(){['facts','inspire','hero'].forEach(k=>{document.getElementById('h-'+k).textContent=state[k];document.getElementById('b-'+k).style.width=Math.min(state[k]*10,100)+'%';});document.getElementById('h-score').textContent=state.score;}
+function updateHUD(){['facts','inspire','hero'].forEach(k=>{const el=document.getElementById('h-'+k);if(el)el.textContent=state[k];const bar=document.getElementById('b-'+k);if(bar)bar.style.width=Math.min(state[k]*10,100)+'%';});document.getElementById('h-score').textContent=state.score;}
 function updateLives(){const h=[];for(let i=0;i<MAX_LIVES;i++)h.push(i<lives?'❤️':'🖤');document.getElementById('h-lives').textContent=h.join('');}
-function updateTimer(){const maxT=TOTAL_TIME+(selectedMascot.timeBonus||0);const pct=Math.max(0,(timeLeft/maxT)*100);document.getElementById('timer-val').textContent=Math.ceil(timeLeft);const bar=document.getElementById('timer-bar');bar.style.width=pct+'%';bar.style.background=pct>50?'#1D9E75':pct>25?'#EF9F27':'#E24B4A';document.getElementById('timer-val').style.color=pct>25?'#2C2C2A':'#E24B4A';}
+function updateTimer(){const maxT=TOTAL_TIME+(selectedMascot.timeBonus||0);const pct=Math.max(0,(timeLeft/maxT)*100);document.getElementById('timer-val').textContent=Math.ceil(timeLeft);const pill=document.getElementById('hud-timer-pill');if(pill){pill.className='hud-pill '+(pct>50?'timer-ok':pct>25?'timer-warn':'timer-danger');}const bar=document.getElementById('timer-bar');if(bar){bar.style.width=pct+'%';}}
 function showPopup(msg,color){const el=document.getElementById('popup');el.textContent=msg;el.style.background=color+'22';el.style.color=color;el.style.opacity='1';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity='0',1400);}
 function spawnParticles(x,y,color,n){if(!n)n=8;for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6-2,life:1,color,size:4+Math.random()*5});}
 const keys={},touchDirs={};
@@ -584,6 +640,17 @@ function rr(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(f
 function draw(){ctx.clearRect(0,0,W,H);const grd=ctx.createLinearGradient(0,0,0,GROUND_Y);grd.addColorStop(0,'#B0D8F0');grd.addColorStop(1,'#E6F4FB');ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(255,255,255,0.85)';[[50,30,90,18],[210,50,110,15],[420,22,85,17],[570,40,75,14]].forEach(([x,y,w,h])=>{const cx=((x-bgOffset*.25+W)%(W+120))-60;ctx.beginPath();ctx.ellipse(cx+w/2,y,w/2,h/2,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(cx+w/3,y+3,w/3.5,h/2.5,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(cx+w*.7,y+2,w/3,h/2.5,0,0,Math.PI*2);ctx.fill();});for(let i=0;i<COLS;i++){ctx.fillStyle=P.ground;ctx.fillRect(i*TILE,GROUND_Y,TILE,TILE);ctx.fillStyle=P.groundDark;ctx.fillRect(i*TILE,GROUND_Y+TILE*.5,TILE,TILE*.5);ctx.fillStyle='#97C459';ctx.fillRect(i*TILE,GROUND_Y,TILE,5);ctx.fillRect(i*TILE,GROUND_Y+TILE,TILE,H);}items.forEach(item=>{if(item.collected)return;const ix=item.x,iy=item.y,iw=item.w,ih=item.h;ctx.globalAlpha=.1;ctx.fillStyle=item.color;ctx.beginPath();ctx.ellipse(ix+iw/2,GROUND_Y-3,iw/2,4,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=item.color+'55';ctx.lineWidth=.5;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(ix+iw/2,GROUND_Y-3);ctx.lineTo(ix+iw/2,iy+ih);ctx.stroke();ctx.setLineDash([]);rr(ix,iy,iw,ih,6,item.color+'22',item.color);ctx.fillStyle=item.color;ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText(item.label,ix+iw/2,iy+ih/2+4);});obstacles.forEach(ob=>{if(!ob.active)return;rr(ob.x,ob.y,ob.w,ob.h,4,P.obstacle+'22');ctx.strokeStyle=P.obstacle;ctx.lineWidth=1.5;ctx.strokeRect(ob.x,ob.y,ob.w,ob.h);ctx.fillStyle=P.obstacle;ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.fillText('!',ob.x+ob.w/2,ob.y+ob.h/2+5);});reptiles.forEach(rep=>{ctx.save();if(rep.kind==='snake')drawSnake(ctx,rep.x,rep.y,rep.dir,rep.frame);else if(rep.kind==='croc')drawCroc(ctx,rep.x,rep.y,rep.dir,rep.frame);else drawGecko(ctx,rep.x,rep.y,rep.dir,rep.frame);ctx.restore();ctx.fillStyle='rgba(0,0,0,.18)';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText(rep.label,rep.x,rep.y-rep.h/2-7);});birds.forEach(b=>{ctx.save();drawBird(ctx,b.x,b.y,b.dir,b.flapFrame,b.danger);if(b.state==='dive'){ctx.globalAlpha=0.6+0.4*Math.sin(frameCount*.3);ctx.fillStyle='#E24B4A';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.fillText('⚠️',b.x+(b.dir>0?16:-16),b.y-22);ctx.globalAlpha=1;}ctx.restore();});const showPlayer=invincible===0||(Math.floor(invincible/8)%2===0);if(showPlayer&&selectedMascot)drawMascot(ctx,player.x,player.y,player.frame,player.onGround,selectedMascot,1);if(selectedMascot&&selectedMascot.id==='star'&&frameCount%20<10){ctx.fillStyle='#FAC775';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.fillText('★',player.x-8,player.y-4);ctx.fillText('★',player.x+30,player.y);}particles.forEach(p=>{ctx.globalAlpha=p.life;rr(p.x-p.size/2,p.y-p.size/2,p.size,p.size,2,p.color);});ctx.globalAlpha=1;if(running){const prog=Math.min(elapsedTime/25,1);const pi=PHASES.indexOf(getCurrentPhase());ctx.fillStyle='rgba(0,0,0,.05)';ctx.fillRect(0,H-3,W,3);ctx.fillStyle=pi>=4?'#E24B4A':pi>=3?'#C97A2A':pi>=2?'#6B8C42':pi>=1?'#5C8A2E':'#378ADD';ctx.fillRect(0,H-3,W*prog,3);}if(gameOver){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#E24B4A';ctx.font='bold 26px sans-serif';ctx.textAlign='center';ctx.fillText('💀 Game Over!',W/2,H/2-20);ctx.fillStyle='#fff';ctx.font='14px sans-serif';ctx.fillText('คะแนน: '+state.score,W/2,H/2+4);ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='11px sans-serif';ctx.fillText('ดูรางวัลด้านล่าง 🏅',W/2,H/2+24);}}
 function gameLoop(){update();draw();if(running)raf=requestAnimationFrame(gameLoop);}
 document.getElementById('start-btn').addEventListener('click',()=>{initAudio();if(raf)cancelAnimationFrame(raf);clearInterval(timerInterval);document.getElementById('reward-overlay').classList.remove('show');initGame();running=true;gameOver=false;document.getElementById('save-banner').style.display='none';document.getElementById('msg').textContent='เก็บ item ให้ได้มากที่สุด!';document.getElementById('start-btn').textContent='🔄 เริ่มใหม่';startTimer();raf=requestAnimationFrame(gameLoop);});
+
+// SIZE SLIDER
+const sizeSlider = document.getElementById('size-slider');
+const sizeLabel = document.getElementById('size-label');
+const canvasWrap = document.getElementById('canvas-wrap');
+function applySize(w){
+  canvasWrap.style.maxWidth = w+'px';
+  sizeLabel.textContent = w+'px';
+}
+sizeSlider.addEventListener('input', ()=>applySize(+sizeSlider.value));
+applySize(640);
 
 // Admin RLS note: rewards table needs INSERT+UPDATE+DELETE policy for admin to work
 // Add these in Supabase SQL Editor:
